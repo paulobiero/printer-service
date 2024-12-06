@@ -4,7 +4,7 @@ const Service = require('node-windows').Service;
 const svc = new Service({
     name: 'PeakUnifyPrinter',
     description: 'Peak unify printer service',
-    script: 'service.exe', // Path to the script you want to run as a service
+    script: 'service.js',
     execPath: process.execPath, // Ensure it uses the current Node.js binary
     env: {
         name: 'NODE_ENV',
