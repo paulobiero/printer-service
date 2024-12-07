@@ -16,5 +16,12 @@
     "escpos-usb": "^3.0.0-alpha.4",
     "express": "^4.21.1",
     "node-windows": "^1.0.0-beta.8"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/node-windows/bin/winsw/winsw.exe",
+      "node_modules/usb/**/*"
+    ]
   }
+
 }
