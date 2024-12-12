@@ -2,6 +2,8 @@ const express = require('express');
 const escpos = require('escpos');
 
 const cors = require('cors')
+const axios = require("axios");
+const sharp = require("sharp");
 escpos.USB = require('escpos-usb');
 const app = express();
 app.use(express.json());
@@ -27,10 +29,11 @@ app.post('/print-receipt', async (req, res) => {
     try {
         const device = new escpos.USB();
         const printer = new escpos.Printer(device);
+
         device.open(async () => {
             try {
-                if (imagePath) {
-                    const image = await loadImage(imagePath);
+                if (company.name) {
+                    const image = await loadImage(company.name);
                     printer.image(image);
                 }
                 printer.align('ct')
@@ -50,9 +53,9 @@ app.post('/print-receipt', async (req, res) => {
                 printer.encode('GB18030').align('ct').size(0, 0).text(`------------------------------------------------`);
                 printer.encode('GB18030').tableCustom(
                     [
-                        {text: "Item", align: "LEFT", width: 0.6},
-                        {text: "Tax", align: "CENTER", width: 0.2},
-                        {text: "Total", align: "RIGHT", width: 0.2}
+                        {text: "Item", align: "LEFT", width: 0.6,style:'B'},
+                        {text: "Tax", align: "CENTER", width: 0.2,style:'B'},
+                        {text: "Total", align: "RIGHT", width: 0.2,style:'B'}
                     ]
                 );
 
@@ -60,7 +63,7 @@ app.post('/print-receipt', async (req, res) => {
                     let item = items[i];
                     printer.encode('GB18030').tableCustom(
                         [
-                            {text: item.name, align: "LEFT", width: 0.6},
+                            {text: `${item.sku}(${item.name})`, align: "LEFT", width: 0.6},
                             {text: "", align: "CENTER", width: 0.2},
                             {text: "", align: "RIGHT", width: 0.2}
                         ] // Optional
@@ -76,7 +79,8 @@ app.post('/print-receipt', async (req, res) => {
                             {text: `${item.price}`, align: "RIGHT", width: 0.2}
                         ]
                     );
-                    printer.encode('GB18030').align('lt').text("\n");
+                    printer.encode('GB18030').align('lt').text("");
+
                 }
                 printer.encode('GB18030').align('ct').size(0, 0).text(`------------------------------------------------`);
                 printer.encode('GB18030').tableCustom(
@@ -96,10 +100,10 @@ app.post('/print-receipt', async (req, res) => {
 
                 printer.encode('GB18030').tableCustom(
                     [
-                        {text: "Code", align: "LEFT", width: 0.25},
-                        {text: "Rate", align: "LEFT", width: 0.25},
-                        {text: "Taxable", align: "LEFT", width: 0.25},
-                        {text: "Tax Amount", align: "LEFT", width: 0.25},
+                        {text: "Code", align: "LEFT", width: 0.25,style:'B'},
+                        {text: "Rate", align: "LEFT", width: 0.25,style:'B'},
+                        {text: "Taxable", align: "LEFT", width: 0.25,style:'B'},
+                        {text: "Tax Amount", align: "LEFT", width: 0.25,style:'B'},
                     ]
                 );
 
@@ -107,7 +111,7 @@ app.post('/print-receipt', async (req, res) => {
                     [
                         {text: "VAT", align: "LEFT", width: 0.25},
                         {text: "16", align: "LEFT", width: 0.25},
-                        {text: `${total ?? 0}`, align: "LEFT", width: 0.25},
+                        {text: `${total-tax ?? 0}`, align: "LEFT", width: 0.25},
                         {text: `${tax ?? 0}`, align: "LEFT", width: 0.25},
                     ] // Optional
                 );
@@ -139,6 +143,7 @@ app.post('/print-receipt', async (req, res) => {
                 printer.encode('GB18030').align('ct').size(0, 0).text(`------------------------------------------------`);
 
                 printer.encode('GB18030').text("Powered by PEAKUNIFY");
+                printer.encode('GB18030').text("For enquiries : +254710218271");
                 printer.encode('GB18030').align('ct').size(0, 0).text(`\n`);
                 printer.encode('GB18030').align('ct').size(0, 0).text(`\n`).cut().close();
                 res.status(200).send({
@@ -159,9 +164,12 @@ app.post('/print-receipt', async (req, res) => {
     }
 });
 
-function loadImage(filePath) {
+ function loadImage(company_name) {
+    const path = require('path');
+    const imagePath = path.join(__dirname, 'public/assets', `${company_name}.png`);
+     console.log(imagePath)
     return new Promise((resolve, reject) => {
-        escpos.Image.load(filePath, image => resolve(image));
+        escpos.Image.load(imagePath, image => resolve(image));
     });
 }
 
