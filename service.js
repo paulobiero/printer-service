@@ -4,6 +4,7 @@ const escpos = require('escpos');
 const cors = require('cors')
 const axios = require("axios");
 const sharp = require("sharp");
+const path = require("path");
 escpos.USB = require('escpos-usb');
 const app = express();
 app.use(express.json());
@@ -166,7 +167,11 @@ app.post('/print-receipt', async (req, res) => {
 
  function loadImage(company_name) {
     const path = require('path');
-    const imagePath = path.join(__dirname, 'public/assets', `${company_name}.png`);
+     const isPkg = typeof process.pkg !== 'undefined';
+
+     const imagePath = isPkg
+         ? path.join(process.execPath, 'assets', `${company_name}.png`) // Path inside pkg binary
+         : path.join(__dirname, 'assets', `${company_name}.png`);
      console.log(imagePath)
     return new Promise((resolve, reject) => {
         escpos.Image.load(imagePath, image => resolve(image));
